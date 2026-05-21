@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hỗ trợ Cập nhật Fix lỗi Hệ thống BCTCNN</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 700px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #333; margin-bottom: 20px; }
+        label { font-weight: bold; display: block; margin-top: 15px; }
+        select, textarea, button { width: 100%; padding: 10px; margin-top: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; box-sizing: border-box; }
+        textarea { height: 120px; resize: vertical; }
+        textarea::placeholder { color: #999; }
+        button { background: #28a745; color: white; border: none; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; padding: 12px; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        .console-container { background: black; padding: 15px; border-radius: 6px; margin-top: 20px; height: 250px; overflow-y: auto; }
+        pre { color: #00FF00; font-family: Consolas, monospace; font-size: 13px; margin: 0; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Công cụ Xử lý Lỗi BCTCNN</h2>
+        
+        <label>Chọn loại lỗi cần xử lý:</label>
+        <select id="errorType">
+            <option value="tkt_dv_nguoidung / tkt_dv_dvgd">tkt_dv_nguoidung / tkt_dv_dvgd</option>
+            <option value="tkt_dm_kbnn">tkt_dm_kbnn</option>
+        </select>
+
+        <label>Mã đơn vị:</label>
+        <textarea id="maDvInput" placeholder="Ví dụ:&#10;819.10183.1160615&#10;424.14TTT.1039519&#10;(Có thể nhập nhiều mã cách nhau bằng dấu phẩy hoặc xuống dòng)"></textarea>
+
+        <button id="execBtn" onclick="sendRequest()">🚀 Thực thi (Fix lỗi)</button>
+
+        <div class="console-container">
+            <pre id="consoleLog">Chào mừng bạn đến với hệ thống xử lý Web App!</pre>
+        </div>
+    </div>
+
+    <script>
+        // ĐIỀN LINK WEB APP CỦA BẠN VÀO ĐÂY
+        const SCRIPT_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"; 
+        
+        function appendLog(msg) {
+            const logWindow = document.getElementById("consoleLog");
+            logWindow.textContent += "\n" + msg;
+            logWindow.parentElement.scrollTop = logWindow.parentElement.scrollHeight;
+        }
+
+        async function sendRequest() {
+            const errorType = document.getElementById("errorType").value;
+            const maDvInput = document.getElementById("maDvInput").value.trim();
+            const btn = document.getElementById("execBtn");
+
+            if (!maDvInput) return alert("Vui lòng nhập Mã đơn vị!");
+
+            btn.disabled = true;
+            document.getElementById("consoleLog").textContent = "Đang gửi yêu cầu lên hệ thống...";
+            
+            // Tạo ID duy nhất bằng timestamp
+            const reqId = "REQ_" + new Date().getTime(); 
+
+            try {
+                // 1. Gửi lệnh POST tạo request
+                await fetch(SCRIPT_URL, {
+                    method: "POST", mode: "no-cors",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ action: "create_request", req_id: reqId, error_type: errorType, ma_dv: maDvInput })
+                });
+
+                appendLog("[OK] Yêu cầu đã được ghi nhận. Đang chờ Backend xử lý...");
+
+                // 2. Liên tục kiểm tra (Poll) mỗi 3 giây
+                const checkInterval = setInterval(async () => {
+                    appendLog("...Đang quét trạng thái từ DB nội bộ...");
+                    
+                    try {
+                        let res = await fetch(`${SCRIPT_URL}?action=check_status&req_id=${reqId}`);
+                        let data = await res.json();
+
+                        if (data.status === "Hoàn thành" || data.status === "Lỗi") {
+                            clearInterval(checkInterval);
+                            appendLog("\n--- KẾT QUẢ TỪ BACKEND ---\n" + data.log);
+                            btn.disabled = false;
+                        } else if (data.status === "Đang xử lý") {
+                            appendLog("Backend đã tiếp nhận và đang chạy lệnh Oracle...");
+                        }
+                    } catch (e) {
+                        console.error("Lỗi mạng khi check status");
+                    }
+                }, 3000);
+
+            } catch (err) {
+                appendLog("[LỖI] Không thể kết nối đến máy chủ: " + err);
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
