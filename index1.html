@@ -1,1 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hỗ trợ Fix lỗi Hệ thống BTCNN</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#008080">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Fix lỗi BCTCNN">
+    <link rel="apple-touch-icon" href="https://vst.mof.gov.vn/webcenter/oracle/webcenter/siteresources/scopedMD/shared/KBNN/images/logo.png">
+    <link rel="icon" type="image/png" href="https://vst.mof.gov.vn/webcenter/oracle/webcenter/siteresources/scopedMD/shared/KBNN/images/logo.png">
 
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f7f6; padding: 20px; margin: 0; }
+        .container { max-width: 700px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h2, h3 { text-align: center; color: #333; margin-bottom: 20px; }
+        label { font-weight: bold; display: block; margin-top: 15px; }
+        input[type="password"], select, textarea, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; box-sizing: border-box; }
+        textarea { height: 120px; resize: vertical; }
+        button { background: #008080; color: white; border: none; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: 0.3s; }
+        button:hover { background: #006666; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        #installBtn { background: #ff9800; display: none; margin-bottom: 20px; }
+        .console-container { background: black; padding: 15px; border-radius: 6px; margin-top: 20px; height: 250px; overflow-y: auto; }
+        pre { color: #00FF00; font-family: Consolas, monospace; font-size: 13px; margin: 0; white-space: pre-wrap; }
+        .error-msg { color: red; text-align: center; margin-top: 10px; font-size: 14px; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="loginScreen">
+        <div style="text-align: center;">
+            <img src="https://vst.mof.gov.vn/webcenter/oracle/webcenter/siteresources/scopedMD/shared/KBNN/images/logo.png" alt="Logo" width="80">
+        </div>
+        <h3>Đăng nhập Hệ thống</h3>
+        <input type="password" id="passInput" placeholder="Nhập mật khẩu truy cập...">
+        <div id="loginError" class="error-msg">Mật khẩu không chính xác!</div>
+        <button id="loginBtn" onclick="verifyLogin()">Đăng nhập</button>
+    </div>
+
+    <div class="container" id="mainApp" style="display: none;">
+        <button id="installBtn" onclick="installApp()">📲 Cài đặt App lên Điện thoại</button>
+
+        <h2>Công cụ Xử lý Lỗi BCTCNN</h2>
+        
+        <label>Chọn loại lỗi cần xử lý:</label>
+        <select id="errorType">
+            <option value="tkt_dv_nguoidung / tkt_dv_dvgd">tkt_dv_nguoidung / tkt_dv_dvgd</option>
+            <option value="tkt_dm_kbnn">tkt_dm_kbnn</option>
+        </select>
+
+        <label>Mã đơn vị:</label>
+        <textarea id="maDvInput" placeholder="Ví dụ:&#10;819.10183.1160615&#10;424.14TTT.1039519&#10;(Có thể nhập nhiều mã cách nhau bằng dấu phẩy hoặc xuống dòng)"></textarea>
+
+        <button id="execBtn" onclick="sendRequest()">🚀 Thực thi (Fix lỗi)</button>
+
+        <div class="console-container">
+            <pre id="consoleLog">Chào mừng bạn đến với hệ thống xử lý Web App!</pre>
+        </div>
+    </div>
+<script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+        
+        // ĐIỀN URL VÀ KEY SUPABASE CỦA BẠN VÀO ĐÂY
+        const SUPABASE_URL = 'https://vogkouunfpjyvyfhxduz.supabase.co'
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvZ2tvdXVuZnBqeXZ5Zmh4ZHV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTY4MTgsImV4cCI6MjA5NTAzMjgxOH0.cV_TlEdF3a9HbBwaWnYujQ6GFbK4ZdRJhbyabhFSnKY'
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+        // Password cố định bảo mật trên FE (Hoặc bạn có thể tạo 1 bảng pass trên Supabase)
+        const SYSTEM_PASS = "123456"; 
+
+        window.onload = () => {
+            if (sessionStorage.getItem("isLoggedIn") === "true") showApp();
+        };
+
+        window.verifyLogin = function() {
+            const pass = document.getElementById("passInput").value.trim();
+            const err = document.getElementById("loginError");
+            if (pass === SYSTEM_PASS) {
+                sessionStorage.setItem("isLoggedIn", "true");
+                showApp();
+            } else {
+                err.style.display = "block";
+            }
+        }
+
+        function showApp() {
+            document.getElementById("loginScreen").style.display = "none";
+            document.getElementById("mainApp").style.display = "block";
+        }
+
+        window.sendRequest = async function() {
+            const errorType = document.getElementById("errorType").value;
+            const maDvInput = document.getElementById("maDvInput").value.trim();
+            const btn = document.getElementById("execBtn");
+
+            if (!maDvInput) return alert("Vui lòng nhập Mã đơn vị!");
+
+            btn.disabled = true;
+            document.getElementById("consoleLog").textContent = "Đang gửi yêu cầu lên Supabase...";
+            const reqId = "REQ_" + new Date().getTime(); 
+
+            try {
+                // Đẩy dữ liệu vào Supabase
+                const { data, error } = await supabase
+                    .table('requests')
+                    .insert([{ req_id: reqId, error_type: errorType, ma_dv: maDvInput, status: 'Chờ xử lý', log: '' }]);
+
+                if (error) throw error;
+                appendLog("⚡ Đã lên Supabase! Đang chờ Backend xử lý trong tíc tắc...");
+
+                // Hỏi liên tục mỗi 2 giây xem có kết quả chưa
+                const checkInterval = setInterval(async () => {
+                    const { data: row, error: fetchErr } = await supabase
+                        .table('requests')
+                        .select('status, log')
+                        .eq('req_id', reqId)
+                        .single();
+
+                    if (row) {
+                        if (row.status === "Hoàn thành" || row.status === "Lỗi") {
+                            clearInterval(checkInterval);
+                            appendLog("\n--- KẾT QUẢ TỪ BACKEND ---\n" + row.log);
+                            btn.disabled = false;
+                        } else if (row.status === "Đang xử lý") {
+                            // Chỉ in 1 lần để tránh lặp log trên FE
+                            if (!window.loggedProcessing) {
+                                appendLog("⚙️ Backend đã nhận lệnh, đang chạy Oracle...");
+                                window.loggedProcessing = true;
+                            }
+                        }
+                    }
+                }, 2000);
+
+            } catch (err) {
+                appendLog("[LỖI] Không thể kết nối Supabase: " + err.message);
+                btn.disabled = false;
+            }
+        }
+
+        function appendLog(msg) {
+            const logWindow = document.getElementById("consoleLog");
+            logWindow.textContent += "\n" + msg;
+            logWindow.parentElement.scrollTop = logWindow.parentElement.scrollHeight;
+        }
+        
+        // Đoạn code PWA Install giữ nguyên
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installBtn').style.display = 'block';
+        });
+
+        window.installApp = function() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        document.getElementById('installBtn').style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+    </script>
+</body>
+</html>
+
+  
+    </script>
