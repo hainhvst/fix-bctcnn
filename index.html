@@ -69,21 +69,40 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvZ2tvdXVuZnBqeXZ5Zmh4ZHV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NTY4MTgsImV4cCI6MjA5NTAzMjgxOH0.cV_TlEdF3a9HbBwaWnYujQ6GFbK4ZdRJhbyabhFSnKY'
         const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-        // Password cố định bảo mật trên FE (Hoặc bạn có thể tạo 1 bảng pass trên Supabase)
-        const SYSTEM_PASS = "123456"; 
-
         window.onload = () => {
             if (sessionStorage.getItem("isLoggedIn") === "true") showApp();
         };
 
-        window.verifyLogin = function() {
+        window.verifyLogin = async function() {
             const pass = document.getElementById("passInput").value.trim();
             const err = document.getElementById("loginError");
-            if (pass === SYSTEM_PASS) {
-                sessionStorage.setItem("isLoggedIn", "true");
-                showApp();
-            } else {
-                err.style.display = "block";
+            const btn = document.getElementById("loginBtn");
+            
+            if (!pass) return;
+
+            btn.disabled = true;
+            btn.innerText = "Đang xác thực...";
+            err.style.display = "none";
+
+            try {
+                // Gọi Hàm RPC bảo mật đã tạo trên Supabase
+                const { data: isMatch, error } = await supabase
+                    .rpc('verify_system_password', { input_pass: pass });
+
+                if (error) throw error;
+
+                if (isMatch === true) {
+                    sessionStorage.setItem("isLoggedIn", "true");
+                    showApp();
+                } else {
+                    err.style.display = "block";
+                    btn.disabled = false;
+                    btn.innerText = "Đăng nhập";
+                }
+            } catch (error) {
+                alert("Lỗi kết nối bảo mật: " + error.message);
+                btn.disabled = false;
+                btn.innerText = "Đăng nhập";
             }
         }
 
