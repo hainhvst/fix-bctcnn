@@ -61,7 +61,7 @@
             <pre id="consoleLog">Chào mừng bạn đến với hệ thống xử lý Web App!</pre>
         </div>
     </div>
-<script type="module">
+    <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
         
         // ĐIỀN URL VÀ KEY SUPABASE CỦA BẠN VÀO ĐÂY
@@ -106,7 +106,7 @@
             try {
                 // Đẩy dữ liệu vào Supabase
                 const { data, error } = await supabase
-                    .table('requests')
+                    .from('requests')
                     .insert([{ req_id: reqId, error_type: errorType, ma_dv: maDvInput, status: 'Chờ xử lý', log: '' }]);
 
                 if (error) throw error;
@@ -115,7 +115,7 @@
                 // Hỏi liên tục mỗi 2 giây xem có kết quả chưa
                 const checkInterval = setInterval(async () => {
                     const { data: row, error: fetchErr } = await supabase
-                        .table('requests')
+                        .from('requests')
                         .select('status, log')
                         .eq('req_id', reqId)
                         .single();
