@@ -7,7 +7,7 @@
   "theme_color": "#008080",
   "icons": [
     {
-      "src": "https://vst.mof.gov.vn/webcenter/oracle/webcenter/siteresources/scopedMD/shared/KBNN/images/logo.png",
+      "src": "https://hainhvst.github.io/fix-bctcnn/logo-KB.png",
       "sizes": "512x512",
       "type": "image/png"
     }
