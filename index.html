@@ -169,36 +169,35 @@
             logWindow.parentElement.scrollTop = logWindow.parentElement.scrollHeight;
         }
         
-        // Đoạn code PWA Install giữ nguyên
+        // --- ĐOẠN CODE GỌI NÚT CÀI ĐẶT PWA ---
         let deferredPrompt;
-
         window.addEventListener('beforeinstallprompt', (e) => {
-          e.preventDefault();
-          deferredPrompt = e;
-        
-          const btn = document.getElementById('installBtn');
-          if (btn) btn.style.display = 'block';
+            e.preventDefault();
+            deferredPrompt = e;
+            const btn = document.getElementById('installBtn');
+            if (btn) btn.style.display = 'block'; // Hiện nút cài đặt
         });
-        
+
         window.installApp = function() {
-          if (!deferredPrompt) return;
-        
-          deferredPrompt.prompt();
-        
-          deferredPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-              const btn = document.getElementById('installBtn');
-              if (btn) btn.style.display = 'none';
-            }
-        
-            deferredPrompt = null;
-          });
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    const btn = document.getElementById('installBtn');
+                    if (btn) btn.style.display = 'none';
+                }
+                deferredPrompt = null;
+            });
         };
+
+        // --- ĐĂNG KÝ SERVICE WORKER TẠI ĐÂY ---
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').then((registration) => {
-                console.log('Service Worker đăng ký thành công!');
-            }).catch((error) => {
-                console.log('Lỗi đăng ký Service Worker:', error);
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then((reg) => {
+                    console.log('SW đã đăng ký thành công.', reg.scope);
+                }).catch((err) => {
+                    console.log('SW đăng ký thất bại:', err);
+                });
             });
         }
     </script>
