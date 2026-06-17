@@ -1,20 +1,23 @@
 {
   "name": "Fix lỗi BCTCNN",
   "short_name": "BCTCNN App",
-  "start_url": "./index.html",
+  "start_url": "/fix-bctcnn/index.html",
+  "scope": "/fix-bctcnn/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#008080",
   "icons": [
     {
-      "src": "./logo-KB-192x192.png",
+      "src": "./logo-KB.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "./logo-KB-192x192.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
