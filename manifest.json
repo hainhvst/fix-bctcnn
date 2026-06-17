@@ -7,7 +7,12 @@
   "theme_color": "#008080",
   "icons": [
     {
-      "src": "https://hainhvst.github.io/fix-bctcnn/logo-KB.png",
+      "src": "./logo-KB.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./logo-KB.png",
       "sizes": "512x512",
       "type": "image/png"
     }
